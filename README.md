@@ -72,12 +72,42 @@ prior.teach(pcr_cycles=8, input_ng=90, reagent_frac=0.28, unique=0.05)   # reage
 Demonstrations enter as down-weighted pseudo-observations: they point the search,
 and real runs correct them. See `min_effective/prior.py`.
 
+## The next layer: plate to droplet
+
+Minimum effective has a ceiling, and droplet microfluidics is it: a fraction of the
+consumable cost and orders of magnitude more throughput for single-cell work. But
+droplets change the physics. There is no per-reaction rescue, and tiny volumes raise
+the noise, so a recipe has to be robust to survive the port. `DropletBridge` scores
+that: readiness is the probability a recipe still decides under droplet noise.
+
+```bash
+python -m min_effective.bridge
+```
+
+The sharp result is structural, not a tuning artifact:
+
+    plate reads-per-dollar optimum   razor edge, not droplet-ready  -> porting is a setback
+    droplet value optimum            robust, droplet-ready          -> porting is a ~180x jump
+
+Those are two different recipes. The plate optimum spends the least to just clear the
+bar, so it cannot miniaturize; porting it wastes a droplet campaign. The recipe you
+want is a robust one with a wide margin. So an agent that optimizes plate reads-per-
+dollar will systematically avoid the chemistries that can port. To decide droplet-
+readiness well, the agent has to optimize the droplet objective, which values
+robustness, and one layer further a **clinical objective** (`target_relevance` in
+`DropletBridge`) so the loop indexes on advancing the therapy, not on raw reads. That
+is how you keep R and D pointed at biological truth instead of meandering toward cheap
+minima: reward information toward the target decision per dollar, and miniaturize the
+moment a chemistry is robust enough to survive it.
+
 ## Layout
 
     min_effective/surface.py   library economics: complexity, duplication, unique reads, URPD
     min_effective/agent.py     cost-aware agent that maximizes URPD, warm-startable
     min_effective/prior.py     the teachable prior (expert demonstrations)
     min_effective/loop.py      closed loop + scoring against the plant
+    min_effective/droplet.py   plate-vs-droplet economics + readiness (the port objective)
+    min_effective/bridge.py    the port decision, structural plant-and-recover
     min_effective/run.py       aggregate CLI
     tests/                     plant-and-recover tests
 
