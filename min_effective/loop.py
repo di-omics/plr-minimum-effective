@@ -72,7 +72,8 @@ class DiscoveryLoop:
             agent.observe(x, obs2.unique_obs)
         return 2
 
-    def run(self) -> Dict:
+    def _search(self):
+        """Run the closed loop; return (surface, agent, runs) without scoring."""
         cfg = self.cfg
         s = LibrarySurface(seed=cfg.seed, target=cfg.surface_target, fault_rate=cfg.fault_rate)
         rng = random.Random(cfg.seed + 1)
@@ -94,8 +95,11 @@ class DiscoveryLoop:
         while runs < cfg.budget:
             x = agent.propose() if self._use_acquisition else prop_rng.choice(agent.candidates)
             runs += self._eval(s, agent, x, rng)
+        return s, agent, runs
 
-        rec = agent.recommend(min_n_eff=cfg.recommend_min_neff)
+    def run(self) -> Dict:
+        s, agent, runs = self._search()
+        rec = agent.recommend(min_n_eff=self.cfg.recommend_min_neff)
         return self._score(s, rec, runs)
 
     def _score(self, s: LibrarySurface, rec: Optional[Vec], runs: int) -> Dict:
