@@ -45,6 +45,7 @@ class DiscoveryConfig:
     seed: int = 0
     strategy: str = "bo_prior"      # bo_prior | bo_cold | random
     exclude_faults: bool = True     # honest search; False keeps CV-flagged faults
+    vision: object = None           # a VisionQC (imperfect CV); None uses the exclude_faults oracle
 
 
 class DiscoveryLoop:
@@ -60,6 +61,8 @@ class DiscoveryLoop:
         return self.cfg.strategy in ("bo_prior", "bo_cold")
 
     def _eval(self, s: LibrarySurface, agent: URPDAgent, x: Vec, rng: random.Random) -> int:
+        if self.cfg.vision is not None:
+            return self._eval_cv(s, agent, x, rng)
         obs = s.evaluate(x, rng)
         if not obs.fault:
             agent.observe(x, obs.unique_obs)
@@ -69,6 +72,18 @@ class DiscoveryLoop:
             return 1
         obs2 = s.evaluate(x, rng)                     # honest: flagged, so re-run once
         if not obs2.fault:
+            agent.observe(x, obs2.unique_obs)
+        return 2
+
+    def _eval_cv(self, s: LibrarySurface, agent: URPDAgent, x: Vec, rng: random.Random) -> int:
+        """Fault handling mediated by an imperfect camera. A missed fault is trusted
+        (poison); a flagged run is re-run (a false alarm wastes the extra run)."""
+        obs = s.evaluate(x, rng)
+        if not self.cfg.vision.inspect(obs.fault, rng):
+            agent.observe(x, obs.unique_obs)          # CV cleared it (may be a missed fault)
+            return 1
+        obs2 = s.evaluate(x, rng)                      # CV flagged it, re-run once
+        if not self.cfg.vision.inspect(obs2.fault, rng):
             agent.observe(x, obs2.unique_obs)
         return 2
 

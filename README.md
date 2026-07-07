@@ -100,6 +100,36 @@ is how you keep R and D pointed at biological truth instead of meandering toward
 minima: reward information toward the target decision per dollar, and miniaturize the
 moment a chemistry is robust enough to survive it.
 
+## Where computer vision plugs in
+
+CV is not a QC garnish here. It is the gate on the training data. The agent learns
+from readouts, so if a run misfired mechanically (bead loss, air gap, a collapsed
+droplet) and its bad number is fed in as real chemistry, the surrogate is poisoned
+and the recommendation drifts. CV catches those misfires in-process and flags the run
+so it is excluded and re-run instead of trusted. So the detector's quality is
+heavy-hitting in the recommends.
+
+```bash
+python -m min_effective.vision
+```
+
+`VisionQC` models an imperfect camera with a recall (probability it flags a true
+fault) and a specificity (probability it leaves a good run alone). Sweeping recall
+from 0 (no camera) to 1 (perfect) shows the climb:
+
+    CV recall     feasible recipes recovered
+    0.0           low   (every mechanical fault is read as bad chemistry)
+    0.8           the loop starts to work
+    1.0           high
+
+The takeaway is a concrete spec: the detector needs roughly 0.8+ recall for the
+autonomous loop to function. That is a target you can hand a vision system, and it is
+where [lab-cv](https://github.com/di-omics/lab-cv) plugs in, the detector that earns
+that recall. Where to point the camera differs by flow, and `where_cv_sees(platform)`
+lists the checkpoints: on a plate, tip pickup, aspiration, bead pellet, ethanol
+removal; in droplets, formation and monodispersity, encapsulation (Poisson), and
+junction clogs.
+
 ## Layout
 
     min_effective/surface.py   library economics: complexity, duplication, unique reads, URPD
@@ -108,6 +138,7 @@ moment a chemistry is robust enough to survive it.
     min_effective/loop.py      closed loop + scoring against the plant
     min_effective/droplet.py   plate-vs-droplet economics + readiness (the port objective)
     min_effective/bridge.py    the port decision, structural plant-and-recover
+    min_effective/vision.py    CV as the fault-detection gate; recall vs recommend quality
     min_effective/run.py       aggregate CLI
     tests/                     plant-and-recover tests
 

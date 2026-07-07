@@ -11,10 +11,12 @@ from .prior import TeachablePrior, default_expert_prior
 from .loop import DiscoveryConfig, DiscoveryLoop, compare
 from .droplet import DropletBridge, Platform, PLATE, DROPLET
 from .bridge import structural, realized_value
+from .vision import VisionQC, CHECKPOINTS, where_cv_sees, recall_sweep
 
 __all__ = [
     "LibrarySurface", "KNOBS", "to_real", "to_norm", "cost",
     "URPDAgent", "TeachablePrior", "default_expert_prior",
     "DiscoveryConfig", "DiscoveryLoop", "compare",
     "DropletBridge", "Platform", "PLATE", "DROPLET", "structural", "realized_value",
+    "VisionQC", "CHECKPOINTS", "where_cv_sees", "recall_sweep",
 ]
