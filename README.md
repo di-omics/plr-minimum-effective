@@ -19,10 +19,9 @@ python -m min_effective.run --seeds 16
 It plants a known maximum-URPD recipe on a library-economics response surface,
 then lets a cost-constrained agent rediscover it blind under a run budget, and
 scores recovery against the plant. In production, evaluating a candidate means
-compiling a [plr-clarity](https://github.com/di-omics/plr-clarity) `dna_ultra2_umi`
-config to a runnable liquid handler method and reading the UMI-deduplicated unique
-count; here a synthetic surface stands in so recovery can be scored against a
-known answer.
+compiling a validated local sequencing configuration into a runnable liquid handler
+STAR method and reading the UMI-deduplicated unique count; here a synthetic
+surface stands in so recovery can be scored against a known answer.
 
 The surface models the economics from three titratable, cost-bearing knobs:
 
